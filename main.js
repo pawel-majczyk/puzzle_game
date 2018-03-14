@@ -11,11 +11,9 @@ class Gameboard {
 
         this.bgimg = './img/puzzle_gray.png'; //tmp hardcoded
         this.gameboard.style.background = `url(${this.bgimg})`;
-        // this.gameboard.style.border = '1px solid yellow';
         this.gameboard.setAttribute('id', 'gameboard');
 
         this.gamearea.appendChild(this.gameboard);
-
     }
 
     createPuzzles() {
@@ -26,26 +24,14 @@ class Gameboard {
 
             currentPosX = Math.random() * this.boardWidth;
             currentPosY = Math.random() * this.boardWidth;
-            // if (i < this.size) { //tmp - works only in 2x2conf for now
-            //     posX = puzzleSize * i;
-            //     posY = 0;
-            //     currentPosX = 0; //(Math.random() * (this.boardWidth));
-            //     currentPosY = 0; // ((Math.random() * (this.puzzleSpacing)) + -250);
-            // } else {
-            //     posX = puzzleSize * i;
-            //     posY = puzzleSize;
-            //     currentPosX = 0; //(Math.random() * (this.boardWidth));
-            //     currentPosY = 0; //((Math.random() * (this.puzzleSpacing)) + -250);
-            // }
-            if (i < this.size) {
-                posX = 0 + (i*puzzleSize);
+
+            if (i < this.size) { // tmp - works only for 2x2 gameboards
+                posX = 0 + (i * puzzleSize);
                 posY = 0;
             } else {
-                posX = 0 + (i-this.size)*puzzleSize;
+                posX = 0 + (i - this.size) * puzzleSize;
                 posY = puzzleSize;
             }
-
-
             let puzzle = new Puzzle(posX, posY, currentPosX, currentPosY, puzzleSize);
             this.puzzles.push(puzzle);
         }
@@ -74,9 +60,7 @@ class Puzzle {
         puzzleDiv.style.backgroundPositionY = `${posY}px`;
         puzzleDiv.style.width = `${puzzleSize}px`;
         puzzleDiv.style.height = `${puzzleSize}px`;
-        // puzzleDiv.style.display = 'none';
         puzzleDiv.style.border = '1px dotted yellow';
-
         return puzzleDiv;
     }
 
@@ -97,12 +81,9 @@ class Puzzle {
 const game = new Gameboard(2);
 game.createPuzzles();
 
-
-
 // event handling
 const gameboard = document.querySelector('#gamearea');
 const puzzles = document.querySelectorAll('.game__puzzle');
-
 
 gameboard.addEventListener('mousemove', showCursorPos);
 puzzles[0].addEventListener('mousemove', showCursorPos);
