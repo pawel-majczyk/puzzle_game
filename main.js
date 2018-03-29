@@ -9,7 +9,7 @@ class Gameboard {
         this.gamearea = document.getElementById('gamearea');
         this.gameboard = document.createElement('div');
 
-        this.bgimg = './img/puzzle_gray.png'; //tmp hardcoded
+        this.bgimg = './img/puzzle_gray.png'; //temporary hardcoded
         this.gameboard.style.background = `url(${this.bgimg})`;
         this.gameboard.setAttribute('id', 'gameboard');
 
@@ -22,10 +22,10 @@ class Gameboard {
             let puzzleSize = (this.boardWidth / this.size);
             let posX, posY, currentPosX, currentPosY;
 
-            currentPosX = Math.random() * this.boardWidth;
+            currentPosX = Math.random() * this.boardWidth; //randomize starting position
             currentPosY = Math.random() * this.boardWidth;
 
-            if (i < this.size) { // tmp - works only for 2x2 gameboards
+            if (i < this.size) { // temporary - works only for 2x2 gameboards
                 posX = 0 + (i * puzzleSize);
                 posY = 0;
             } else {
@@ -35,8 +35,9 @@ class Gameboard {
             let puzzle = new Puzzle(posX, posY, currentPosX, currentPosY, puzzleSize);
             this.puzzles.push(puzzle);
         }
+        console.log(this.puzzles); //eslint-disable-line
         this.puzzles.forEach(puzzle => {
-            this.gameboard.appendChild(puzzle);
+            this.gameboard.appendChild(puzzle.puzzleDiv);
         });
     }
 }
@@ -46,7 +47,7 @@ class Puzzle {
         const initialOffset = 350;
         this.posX = posX;
         this.posY = posY;
-        this.bgimg = './img/puzzle_org.png'; //tmp hardcoded
+        this.bgimg = './img/puzzle_org.png'; //temporary hardcoded
         this.currentPosX = currentPosX;
         this.currentPosY = currentPosY + initialOffset;
         this.locked = false;
@@ -61,7 +62,7 @@ class Puzzle {
         puzzleDiv.style.width = `${puzzleSize}px`;
         puzzleDiv.style.height = `${puzzleSize}px`;
         puzzleDiv.style.border = '1px dotted yellow';
-        return puzzleDiv;
+        this.puzzleDiv = puzzleDiv;
     }
 
     move() {
@@ -73,6 +74,11 @@ class Puzzle {
         // if currentPos ~ pos then> set current pos to pos and->
         this.locked = true;
     }
+
+    highlight() {
+        this.style.border = '4px solid #6cff6c';
+        alert('asd');
+    }
 }
 
 //class GameInterface
@@ -82,11 +88,23 @@ const game = new Gameboard(2);
 game.createPuzzles();
 
 // event handling
-const gameboard = document.querySelector('#gamearea');
+const gameboard = document.querySelector('#gameboard');
 const puzzles = document.querySelectorAll('.game__puzzle');
 
-gameboard.addEventListener('mousemove', showCursorPos);
-puzzles[0].addEventListener('mousemove', showCursorPos);
+// gameboard.addEventListener('mousemove', showCursorPos);
+gameboard.addEventListener('mousedown', showCursorPos);
+//puzzles[0].addEventListener('mousemove', showCursorPos);
+
+
+
+puzzles.forEach(puzzle => {
+    puzzle.addEventListener('click', function () {
+        // says false :(
+        console.log(this); //eslint-disable-line
+    });
+});
+
+// console.log(puzzles); //eslint-disable-line
 
 function showCursorPos(e) {
     headings[0].innerHTML = `cursor pos: X:${e.offsetX} Y:${e.offsetY}<br>
