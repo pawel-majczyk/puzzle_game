@@ -63,6 +63,7 @@ class Puzzle {
         puzzleDiv.style.height = `${puzzleSize}px`;
         puzzleDiv.style.border = '1px dotted yellow';
         this.puzzleDiv = puzzleDiv;
+        return this;
     }
 
     move() {
@@ -81,35 +82,28 @@ class Puzzle {
     }
 }
 
-//class GameInterface
-
-// create game instance
 const game = new Gameboard(2);
 game.createPuzzles();
 
-// event handling
-const gameboard = document.querySelector('#gameboard');
+// const gameboard = document.querySelector('#gameboard');
 const puzzles = document.querySelectorAll('.game__puzzle');
-
-// gameboard.addEventListener('mousemove', showCursorPos);
-gameboard.addEventListener('mousedown', showCursorPos);
-//puzzles[0].addEventListener('mousemove', showCursorPos);
-
-
+// const headings = document.getElementsByTagName('h1');
 
 puzzles.forEach(puzzle => {
-    puzzle.addEventListener('click', function () {
-        // says false :(
-        console.log(this); //eslint-disable-line
-    });
+    puzzle.addEventListener('mousedown', startDragging);
+    puzzle.addEventListener('mouseup', stopDragging);
 });
 
-// console.log(puzzles); //eslint-disable-line
-
-function showCursorPos(e) {
-    headings[0].innerHTML = `cursor pos: X:${e.offsetX} Y:${e.offsetY}<br>
-    .${e.target.className}#${e.target.id}`;
+function startDragging() {
+    this.beingDragged = true;
+    this.style.border = '3px solid red';  
 }
 
-// temp
-const headings = document.getElementsByTagName('h1');
+function stopDragging() {
+    this.style.border = '1px dotted yellow';
+}
+
+// function showCursorPos(e) {
+//     headings[0].innerHTML = `cursor pos: X:${e.offsetX} Y:${e.offsetY}<br>
+//     .${e.target.className}#${e.target.id}`;
+// }
