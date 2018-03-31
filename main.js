@@ -21,7 +21,7 @@ class Gameboard {
         for (let i = 0; i < this.maxScore; i++) {
             let puzzleSize = (this.boardWidth / this.size);
             let posX, posY, currentPosX, currentPosY;
-
+            let id = i;
             currentPosX = Math.random() * this.boardWidth; //randomize starting position
             currentPosY = Math.random() * this.boardWidth;
 
@@ -32,10 +32,10 @@ class Gameboard {
                 posX = 0 + (i - this.size) * puzzleSize;
                 posY = puzzleSize;
             }
-            let puzzle = new Puzzle(posX, posY, currentPosX, currentPosY, puzzleSize);
+            let puzzle = new Puzzle(id, posX, posY, currentPosX, currentPosY, puzzleSize);
             this.puzzles.push(puzzle);
+            console.log(this.puzzles[i].posX, this.puzzles[i].posY); //eslint-disable-line
         }
-        console.log(this.puzzles); //eslint-disable-line
         this.puzzles.forEach(puzzle => {
             this.gameboard.appendChild(puzzle.puzzleDiv);
         });
@@ -43,7 +43,7 @@ class Gameboard {
 }
 
 class Puzzle {
-    constructor(posX, posY, currentPosX, currentPosY, puzzleSize) {
+    constructor(id, posX, posY, currentPosX, currentPosY, puzzleSize) {
         const initialOffset = 350;
         this.posX = posX;
         this.posY = posY;
@@ -54,6 +54,7 @@ class Puzzle {
 
         const puzzleDiv = document.createElement('div');
         puzzleDiv.className = 'game__puzzle';
+        puzzleDiv.id = id;
         puzzleDiv.style.left = `${this.currentPosX}px`;
         puzzleDiv.style.top = `${this.currentPosY}px`;
         puzzleDiv.style.background = `url(${this.bgimg})`;
@@ -63,22 +64,6 @@ class Puzzle {
         puzzleDiv.style.height = `${puzzleSize}px`;
         puzzleDiv.style.border = '1px dotted yellow';
         this.puzzleDiv = puzzleDiv;
-        return this;
-    }
-
-    move() {
-        this.puzzleDiv.style.left = `${this.currentPosX}px`;
-        this.puzzleDiv.style.top = `${this.currentPosX+this.initialOffset}px`;
-    }
-
-    lock() {
-        // if currentPos ~ pos then> set current pos to pos and->
-        this.locked = true;
-    }
-
-    highlight() {
-        this.style.border = '4px solid #6cff6c';
-        alert('asd');
     }
 }
 
@@ -94,43 +79,65 @@ puzzles.forEach(puzzle => {
 });
 
 let beingDragged = false;
+let correctSpot = false;
 
 function startDragging(e) {
     e.preventDefault();
-    beingDragged = true;
     this.style.border = '1px solid red';
+    this.style.zIndex = '100'; //move on top, so other puzzles do not block moving
     this.addEventListener('mousemove', whileDragging);
-    this.addEventListener('mouseup', stopDragging);
 }
 
 function whileDragging(e) {
+    beingDragged = true;
     this.style.opacity = 0.5;
     this.style.top = e.clientY - 128 + 'px';
     this.style.left = e.clientX - 128 + 'px';
     showCursorPos(e);
     checkForLock(e);
+    this.addEventListener('mouseup', stopDragging);
 }
 
 function stopDragging() {
     beingDragged = false;
     this.removeEventListener('mousemove', whileDragging);
     this.style.opacity = 1;
-    this.style.border = '1px solid green';
+    this.style.zIndex = '10';
+    if (correctSpot) {
+        this.style.border = 'none';
+        console.log(this); //eslint-disable-line
+
+        this.style.top = getRefPoints(this.id).top + 'px';
+        this.style.left = getRefPoints(this.id).left + 'px';
+        this.style.zIndex = 10;
+        this.removeEventListener('mousedown', startDragging);
+    } else {
+        this.style.border = '2px solid green';
+    }
 }
 
 
 function checkForLock(e) {
-    console.log(gameboard.offsetLeft - e.target.offsetLeft); //eslint-disable-line
+    let refPoints = getRefPoints(e.target.id);
     if (
-        (gameboard.offsetLeft - e.target.offsetLeft <= 10 &&
-            gameboard.offsetLeft - e.target.offsetLeft >= -10)
-        &&
-        (gameboard.offsetTop - e.target.offsetTop <= 10 &&
-            gameboard.offsetTop - e.target.offsetTop >= -10)
+        (refPoints.left - e.target.offsetLeft <= 10 &&
+            refPoints.left - e.target.offsetLeft >= -10) &&
+        (refPoints.top - e.target.offsetTop <= 10 &&
+            refPoints.top - e.target.offsetTop >= -10)
     ) {
-        
-        e.target.style.border = '4px solid #4F4';
+        e.target.style.border = '2px solid #ccc';
+        correctSpot = true;
+    } else {
+        e.target.style.border = '2px solid brown';
+        correctSpot = false;
     }
+}
+
+function getRefPoints(targetId) {
+    let references = {};
+    references.top = gameboard.offsetTop + game.puzzles[targetId].posY;
+    references.left = gameboard.offsetLeft + game.puzzles[targetId].posX;
+    return references;
 }
 
 
