@@ -85,25 +85,66 @@ class Puzzle {
 const game = new Gameboard(2);
 game.createPuzzles();
 
-// const gameboard = document.querySelector('#gameboard');
+const gameboard = document.querySelector('#gameboard');
 const puzzles = document.querySelectorAll('.game__puzzle');
-// const headings = document.getElementsByTagName('h1');
+const headings = document.getElementsByTagName('h1');
 
 puzzles.forEach(puzzle => {
     puzzle.addEventListener('mousedown', startDragging);
-    puzzle.addEventListener('mouseup', stopDragging);
 });
 
-function startDragging() {
-    this.beingDragged = true;
-    this.style.border = '3px solid red';  
+let beingDragged = false;
+
+function startDragging(e) {
+    e.preventDefault();
+    beingDragged = true;
+    this.style.border = '1px solid red';
+    this.addEventListener('mousemove', whileDragging);
+    this.addEventListener('mouseup', stopDragging);
+}
+
+function whileDragging(e) {
+    this.style.opacity = 0.5;
+    this.style.top = e.clientY - 128 + 'px';
+    this.style.left = e.clientX - 128 + 'px';
+    showCursorPos(e);
+    checkForLock(e);
 }
 
 function stopDragging() {
-    this.style.border = '1px dotted yellow';
+    beingDragged = false;
+    this.removeEventListener('mousemove', whileDragging);
+    this.style.opacity = 1;
+    this.style.border = '1px solid green';
 }
 
-// function showCursorPos(e) {
-//     headings[0].innerHTML = `cursor pos: X:${e.offsetX} Y:${e.offsetY}<br>
-//     .${e.target.className}#${e.target.id}`;
-// }
+
+function checkForLock(e) {
+    console.log(gameboard.offsetLeft - e.target.offsetLeft); //eslint-disable-line
+    if (
+        (gameboard.offsetLeft - e.target.offsetLeft <= 10 &&
+            gameboard.offsetLeft - e.target.offsetLeft >= -10)
+        &&
+        (gameboard.offsetTop - e.target.offsetTop <= 10 &&
+            gameboard.offsetTop - e.target.offsetTop >= -10)
+    ) {
+        
+        e.target.style.border = '4px solid #4F4';
+    }
+}
+
+
+
+function showCursorPos(e) {
+    headings[0].innerHTML = `.${e.target.className}#${e.target.id} <br>
+    e.clientX = ${e.clientX} e.clientY = ${e.clientY};<br>
+     cursor pos: X:${e.offsetX} Y:${e.offsetY} ||${e.target.offsetLeft+e.offsetX}:${e.target.offsetTop+e.offsetY} <br>
+    posX:${e.target.offsetLeft}/posY:${e.target.offsetTop}<br>
+    calc:<br>
+    gameboard.offsetLeft ${gameboard.offsetLeft} <br>
+    gameboard.offsetTop ${gameboard.offsetTop} <br>
+    e.target.offsetLeft  ${e.target.offsetLeft}<br>
+    e.target.offsetTop  ${e.target.offsetTop}<br>
+    
+    `;
+}
