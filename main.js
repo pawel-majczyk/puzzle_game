@@ -40,6 +40,18 @@ class Gameboard {
             this.gameboard.appendChild(puzzle.puzzleDiv);
         });
     }
+
+    checkScore() {
+        if (this.score >= this.maxScore) {
+            gameboard.style.border = '3px solid limegreen';
+            setTimeout(() => {
+                alert('Gratuluję! Jesteś zwycienscom!!!1111');  
+            }, 250);
+            setTimeout(() => {
+                window.location.replace('https://www.youtube.com/watch?v=1Bix44C1EzY');
+            }, 1000);
+        }
+    }
 }
 
 class Puzzle {
@@ -78,18 +90,16 @@ puzzles.forEach(puzzle => {
     puzzle.addEventListener('mousedown', startDragging);
 });
 
-let beingDragged = false;
+// let beingDragged = false;
 let correctSpot = false;
 
 function startDragging(e) {
     e.preventDefault();
-    this.style.border = '1px solid red';
     this.style.zIndex = '100'; //move on top, so other puzzles do not block moving
     this.addEventListener('mousemove', whileDragging);
 }
 
 function whileDragging(e) {
-    beingDragged = true;
     this.style.opacity = 0.5;
     this.style.top = e.clientY - 128 + 'px';
     this.style.left = e.clientX - 128 + 'px';
@@ -99,20 +109,19 @@ function whileDragging(e) {
 }
 
 function stopDragging() {
-    beingDragged = false;
     this.removeEventListener('mousemove', whileDragging);
     this.style.opacity = 1;
     this.style.zIndex = '10';
     if (correctSpot) {
         this.style.border = 'none';
-        console.log(this); //eslint-disable-line
-
         this.style.top = getRefPoints(this.id).top + 'px';
         this.style.left = getRefPoints(this.id).left + 'px';
         this.style.zIndex = 10;
         this.removeEventListener('mousedown', startDragging);
+        game.score += 1;
+        game.checkScore();
     } else {
-        this.style.border = '2px solid green';
+        this.style.border = '1px dotted yellow';
     }
 }
 
@@ -125,10 +134,10 @@ function checkForLock(e) {
         (refPoints.top - e.target.offsetTop <= 10 &&
             refPoints.top - e.target.offsetTop >= -10)
     ) {
-        e.target.style.border = '2px solid #ccc';
+        e.target.style.border = '2px solid limegreen';
         correctSpot = true;
     } else {
-        e.target.style.border = '2px solid brown';
+        e.target.style.border = '1px solid orangered';
         correctSpot = false;
     }
 }
