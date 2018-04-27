@@ -45,11 +45,11 @@ class Gameboard {
         if (this.score >= this.maxScore) {
             gameboard.style.border = '3px solid limegreen';
             setTimeout(() => {
-                alert('Gratuluję! Jesteś zwycienscom!!!1111');  
+                alert('Gratuluję! Jesteś zwycienscom!!!1111');
             }, 250);
-            setTimeout(() => {
-                window.location.replace('https://www.youtube.com/watch?v=1Bix44C1EzY');
-            }, 1000);
+            // setTimeout(() => {
+            //     window.location.replace('https://www.youtube.com/watch?v=1Bix44C1EzY');
+            // }, 1000);
         }
     }
 }
@@ -127,13 +127,15 @@ function stopDragging() {
 
 
 function checkForLock(e) {
-    let refPoints = getRefPoints(e.target.id);
-    if (
-        (refPoints.left - e.target.offsetLeft <= 10 &&
-            refPoints.left - e.target.offsetLeft >= -10) &&
-        (refPoints.top - e.target.offsetTop <= 10 &&
-            refPoints.top - e.target.offsetTop >= -10)
-    ) {
+    const refPoints = getRefPoints(e.target.id);
+    const snapRange = 10;
+    const elementIsWithinDropZone = (
+        refPoints.left - e.target.offsetLeft <= snapRange &&
+        refPoints.left - e.target.offsetLeft >= -snapRange)
+     && (refPoints.top - e.target.offsetTop <= snapRange &&
+        refPoints.top - e.target.offsetTop >= -snapRange);
+
+    if (elementIsWithinDropZone) {
         e.target.style.border = '2px solid limegreen';
         correctSpot = true;
     } else {
