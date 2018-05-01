@@ -56,7 +56,7 @@ class Gameboard {
 
 class Puzzle {
     constructor(id, posX, posY, currentPosX, currentPosY, puzzleSize) {
-        const initialOffset = 350;
+        const initialOffset = 50;
         this.posX = posX;
         this.posY = posY;
         this.bgimg = './img/puzzle_org.png'; //temporary hardcoded
@@ -118,8 +118,11 @@ function stopDragging() {
         this.style.left = getRefPoints(this.id).left + 'px';
         this.style.zIndex = 10;
         this.removeEventListener('mousedown', startDragging);
-        game.score += 1;
-        game.checkScore();
+        if (!this.locked) {
+            game.score += 1;
+            game.checkScore();
+        };
+        this.locked = true;
     } else {
         this.style.border = '1px dotted yellow';
     }
