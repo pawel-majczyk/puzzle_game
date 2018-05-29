@@ -1,53 +1,56 @@
-class Gameboard {
-    constructor(size, boardWidth = 512) {
+class GameApp {
+    constructor(numOfPuzzles, boardWidth = 512, collectionId) {
+        this.collectionId = collectionId;
         this.score = 0;
-        this.size = size; // square root of total number of puzzles
-        this.maxScore = Math.pow(size, 2);
+        this.numOfPuzzles = numOfPuzzles; // square root of total number of puzzles
+        this.maxScore = Math.pow(numOfPuzzles, 2);
         this.boardWidth = boardWidth;
         this.puzzles = [];
         this.gameApp = document.getElementById('game_app');
-        this.gameboard = document.createElement('div');
-        this.gameboard.setAttribute('id', 'gameboard');
-        this.gameApp.appendChild(this.gameboard);
+        this.gameContainer = document.createElement('div');
+        this.gameContainer.setAttribute('id', 'gameboard');
+        this.gameApp.appendChild(this.gameContainer);
+        this.board = document.querySelector('#gameboard');
+        //get the image and create puzzles!
         this.createPuzzles();
-        this.setBackground();
     }
     static getPicture() {
-        if (!this.bgimage) {
+        if (!this.bgimagae) {
             this.bgimage = 'https://source.unsplash.com/random/512x512';
-            return this.bgimage;
+            return this.bgimage; 
         } else {
             return this.bgimage;
         }
     }
-
-    setBackground() {
-        this.bgimage = 'https://source.unsplash.com/random/512x512';
-        // this.gameboard.style.background = `url(${this.bgimage})`; //to-do with filter
-    }
-
     createPuzzles() {
         //generate puzzles
         for (let i = 0; i < this.maxScore; i++) {
-            let puzzleSize = (this.boardWidth / this.size);
+            let puzzleSize = (this.boardWidth / this.numOfPuzzles);
+            this.puzzleSize = puzzleSize;
             let posX, posY, currentPosX, currentPosY;
             let id = i;
             currentPosX = Math.random() * this.boardWidth; //randomize starting position
             currentPosY = Math.random() * this.boardWidth;
 
-            if (i < this.size) { // temporary - works only for 2x2 gameboards
-                posX = 0 + (i * puzzleSize);
-                posY = 0;
-            } else {
-                posX = 0 + (i - this.size) * puzzleSize;
-                posY = puzzleSize;
-            }
+            /** Calculate origns of each puzzle
+             * values below are later used to determine background offset
+             * @param {number} posX - puzzle origin position on horizontal axis
+             * @param {number} posY - puzzle origin position on vertical axis
+             */
+            posX = (i % Math.sqrt(this.maxScore)) * puzzleSize;
+            posY = (Math.floor(i / Math.sqrt(this.maxScore))) * puzzleSize;
+            // console.log(`id: ${id} | posX/Y:${posX}/${posY}`); //eslint-disable-line
+
             let puzzle = new Puzzle(id, posX, posY, currentPosX, currentPosY, puzzleSize);
             this.puzzles.push(puzzle);
         }
         this.puzzles.forEach(puzzle => {
-            this.gameboard.appendChild(puzzle.puzzleDiv);
+            this.gameContainer.appendChild(puzzle.puzzleDiv);
         });
+    }
+
+    getPuzzleSize(factor = 1) {
+        return this.puzzleSize * factor;
     }
 
     checkScore() {
@@ -61,23 +64,25 @@ class Gameboard {
 
 class Puzzle {
     constructor(id, posX, posY, currentPosX, currentPosY, puzzleSize) {
-        const initialOffset = 25;
+        const initialOffset = 125;
         this.posX = posX;
         this.posY = posY;
+        this.puzzleSize = puzzleSize;
         this.currentPosX = currentPosX;
         this.currentPosY = currentPosY + initialOffset;
         this.locked = false;
-
+        // create puzzle element
         const puzzleDiv = document.createElement('div');
         puzzleDiv.className = 'game__puzzle';
         puzzleDiv.id = id;
         puzzleDiv.style.left = `${this.currentPosX}px`;
         puzzleDiv.style.top = `${this.currentPosY}px`;
-        puzzleDiv.style.background = `url(${Gameboard.getPicture()})`;
-        puzzleDiv.style.backgroundPositionX = `${posX}px`;
-        puzzleDiv.style.backgroundPositionY = `${posY}px`;
+        puzzleDiv.style.background = `url(${GameApp.getPicture()})`;
+        puzzleDiv.style.backgroundPositionX = `${-posX}px`;
+        puzzleDiv.style.backgroundPositionY = `${-posY}px`;
         puzzleDiv.style.width = `${puzzleSize}px`;
         puzzleDiv.style.height = `${puzzleSize}px`;
+        //add eventhandlers
         puzzleDiv.addEventListener('mousedown', this.startDragging);
         puzzleDiv.addEventListener('mousemove', this.whileDragging);
         puzzleDiv.addEventListener('mouseup', this.stopDragging);
@@ -95,8 +100,8 @@ class Puzzle {
 
     whileDragging(e) {
         if (this.draggabble) {
-            this.style.top = e.clientY - 128 + 'px';
-            this.style.left = e.clientX - 128 + 'px';
+            this.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
+            this.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
             let fits = Puzzle.checkForLock(e);
             if (fits) {
                 this.classList.add('--it-fits');
@@ -104,7 +109,6 @@ class Puzzle {
                 this.classList.remove('--it-fits');
             }
         }
-        // showCursorPos(e); //dev utility
     }
 
     stopDragging(e) {
@@ -126,13 +130,13 @@ class Puzzle {
     static checkForLock(e) {
         let correctSpot = false;
         const refPoints = Puzzle.getRefPoints(e.target.id);
+        // snap puzzle to its origin
         const snapRange = 18;
         const elementIsWithinDropZone =
             (refPoints.left - e.target.offsetLeft <= snapRange &&
                 refPoints.left - e.target.offsetLeft >= -snapRange) &&
             (refPoints.top - e.target.offsetTop <= snapRange &&
                 refPoints.top - e.target.offsetTop >= -snapRange);
-
         if (elementIsWithinDropZone) {
             correctSpot = true;
         } else {
@@ -143,29 +147,17 @@ class Puzzle {
 
     static getRefPoints(targetId) {
         let references = {};
-        references.top = gameboard.offsetTop + game.puzzles[targetId].posY;
-        references.left = gameboard.offsetLeft + game.puzzles[targetId].posX;
+        references.top = game.board.offsetTop + game.puzzles[targetId].posY;
+        references.left = game.board.offsetLeft + game.puzzles[targetId].posX;
         return references;
     }
 
 
 }
 
-const game = new Gameboard(2);
-const gameboard = document.querySelector('#gameboard');
+let game;
+//initial setup
+let size = 512; //danger! not yet implemeted
+let collection = ['1223439', '582659', '289662']; //aerials, faces, outdoors
 
-//developer utils
-// const headings = document.getElementsByTagName('h1');
-// function showCursorPos(e) {
-//     headings[0].innerHTML = `.${e.target.className}#${e.target.id} <br>
-//     e.clientX = ${e.clientX} e.clientY = ${e.clientY};<br>
-//      cursor pos: X:${e.offsetX} Y:${e.offsetY} ||${e.target.offsetLeft+e.offsetX}:${e.target.offsetTop+e.offsetY} <br>
-//     posX:${e.target.offsetLeft}/posY:${e.target.offsetTop}<br>
-//     calc:<br>
-//     gameboard.offsetLeft ${gameboard.offsetLeft} <br>
-//     gameboard.offsetTop ${gameboard.offsetTop} <br>
-//     e.target.offsetLeft  ${e.target.offsetLeft}<br>
-//     e.target.offsetTop  ${e.target.offsetTop}<br>
-
-//     `;
-// }
+game = new GameApp(2, size, collection);
