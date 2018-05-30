@@ -1,21 +1,10 @@
 body {
-    background: #8b6b58
+    background: #8b6b58;
+    overflow: scroll;
 }
 
-h1 {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    font-size: 16px;
-    text-align: center;
-    padding: 1em;
-    background: rgba(209, 228, 230, 0.453);
-    color: black;
-    position: absolute;
-    top: -50;
-    left: 0;
-}
 
-.container {
-    width: 520px;
+.content {
     background: #2b3636;
     color: #819c94;
     margin: 0 auto;
@@ -23,10 +12,12 @@ h1 {
 }
 
 #game_app {
+    /*    
     width: 512px;
-    height: 512px;
+    height: 512px; 
+    */
     background: #7c8b8b69;
-    margin: 32px auto;
+    margin: 0 auto;
 }
 
 #gameboard {
@@ -42,6 +33,7 @@ h1 {
 }
 
 .game__puzzle:hover {
+    box-sizing: border-box;
     border: 1px dashed yellow;
 }
 

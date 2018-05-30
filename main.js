@@ -7,22 +7,30 @@ class GameApp {
         this.boardWidth = boardWidth;
         this.puzzles = [];
         this.gameApp = document.getElementById('game_app');
+        this.gameApp.style.height = `${this.boardWidth}px`;
+        this.gameApp.style.width = `${this.boardWidth}px`;
         this.gameContainer = document.createElement('div');
         this.gameContainer.setAttribute('id', 'gameboard');
         this.gameApp.appendChild(this.gameContainer);
-        this.board = document.querySelector('#gameboard');
-        //get the image and create puzzles!
-        this.createPuzzles();
     }
-    static getPicture() {
-        if (!this.bgimagae) {
-            this.bgimage = 'https://source.unsplash.com/random/512x512';
-            return this.bgimage; 
-        } else {
-            return this.bgimage;
-        }
+
+    //get the image and create puzzles!
+    init(boardWidth = this.boardWidth, collectionId = this.collectionId) {
+        let self = this;
+        this.puzzleImage = (function getPicture(boardWidth, collectionId) {
+            console.log('collectionId :', collectionId); //eslint-disable-line
+            fetch(`https://source.unsplash.com/random/${boardWidth}x${boardWidth}`)
+                .then(imgData => imgData.url)
+                .then(url =>
+                    self.createPuzzles(url));
+        })(boardWidth, collectionId);
+
+
+
     }
-    createPuzzles() {
+
+
+    createPuzzles(puzzleImage) {
         //generate puzzles
         for (let i = 0; i < this.maxScore; i++) {
             let puzzleSize = (this.boardWidth / this.numOfPuzzles);
@@ -41,7 +49,7 @@ class GameApp {
             posY = (Math.floor(i / Math.sqrt(this.maxScore))) * puzzleSize;
             // console.log(`id: ${id} | posX/Y:${posX}/${posY}`); //eslint-disable-line
 
-            let puzzle = new Puzzle(id, posX, posY, currentPosX, currentPosY, puzzleSize);
+            let puzzle = new Puzzle(id, posX, posY, currentPosX, currentPosY, puzzleSize, puzzleImage);
             this.puzzles.push(puzzle);
         }
         this.puzzles.forEach(puzzle => {
@@ -63,11 +71,12 @@ class GameApp {
 }
 
 class Puzzle {
-    constructor(id, posX, posY, currentPosX, currentPosY, puzzleSize) {
+    constructor(id, posX, posY, currentPosX, currentPosY, puzzleSize, puzzleImage) {
         const initialOffset = 125;
         this.posX = posX;
         this.posY = posY;
         this.puzzleSize = puzzleSize;
+        this.puzzleImage = puzzleImage;
         this.currentPosX = currentPosX;
         this.currentPosY = currentPosY + initialOffset;
         this.locked = false;
@@ -77,7 +86,7 @@ class Puzzle {
         puzzleDiv.id = id;
         puzzleDiv.style.left = `${this.currentPosX}px`;
         puzzleDiv.style.top = `${this.currentPosY}px`;
-        puzzleDiv.style.background = `url(${GameApp.getPicture()})`;
+        puzzleDiv.style.background = `url(${this.puzzleImage})`;
         puzzleDiv.style.backgroundPositionX = `${-posX}px`;
         puzzleDiv.style.backgroundPositionY = `${-posY}px`;
         puzzleDiv.style.width = `${puzzleSize}px`;
@@ -147,17 +156,37 @@ class Puzzle {
 
     static getRefPoints(targetId) {
         let references = {};
-        references.top = game.board.offsetTop + game.puzzles[targetId].posY;
-        references.left = game.board.offsetLeft + game.puzzles[targetId].posX;
+        references.top = game.gameContainer.offsetTop + game.puzzles[targetId].posY;
+        references.left = game.gameContainer.offsetLeft + game.puzzles[targetId].posX;
         return references;
     }
 
 
 }
 
-let game;
 //initial setup
-let size = 512; //danger! not yet implemeted
-let collection = ['1223439', '582659', '289662']; //aerials, faces, outdoors
+let size = 512; //experimental
+let collection = ['1223439', '582659', '289662']; //aerials, faces, outdoors (not implemented yet)
 
-game = new GameApp(2, size, collection);
+function getRand(collection) {
+    return collection[(Math.floor(Math.random() * collection.length))];
+}
+
+
+// execution
+let game;
+(function () {
+    return new Promise((resolve) => {
+        let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
+        if (answer > 1 && answer < 8) {
+            resolve(answer);
+        } else {
+            alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
+            resolve(2);
+        }
+    }).then(selection => {
+
+        game = new GameApp(selection, size, getRand(collection));
+        game.init();
+    });
+})();
