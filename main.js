@@ -1,3 +1,4 @@
+'use strict';
 class GameApp {
     constructor(numOfPuzzles, boardWidth = 512, collectionId) {
         this.collectionId = collectionId;
@@ -47,7 +48,7 @@ class GameApp {
              */
             posX = (i % Math.sqrt(this.maxScore)) * puzzleSize;
             posY = (Math.floor(i / Math.sqrt(this.maxScore))) * puzzleSize;
-            // console.log(`id: ${id} | posX/Y:${posX}/${posY}`); //eslint-disable-line
+            // console.log(`id: ${id} | posX/Y:${posX}/${posY}`); 
 
             let puzzle = new Puzzle(id, posX, posY, currentPosX, currentPosY, puzzleSize, puzzleImage);
             this.puzzles.push(puzzle);
@@ -95,11 +96,13 @@ class Puzzle {
         puzzleDiv.addEventListener('mousedown', this.startDragging);
         puzzleDiv.addEventListener('mousemove', this.whileDragging);
         puzzleDiv.addEventListener('mouseup', this.stopDragging);
+        puzzleDiv.addEventListener('mouseleave', this.stopDragging);
 
         this.puzzleDiv = puzzleDiv;
     }
 
     startDragging(e) {
+        e.preventDefault(); //disable OLE/ActiveX
         this.classList.add('--dragged');
         Puzzle.checkForLock(e);
         if (!this.locked) {
@@ -166,7 +169,7 @@ class Puzzle {
 
 //initial setup
 let size = 512; //experimental
-let collection = ['1223439', '582659', '289662']; //aerials, faces, outdoors (not implemented yet)
+let collection = ['1223439', '582659', '289662']; //[aerials, faces, outdoors] (not implemented yet)
 
 function getRand(collection) {
     return collection[(Math.floor(Math.random() * collection.length))];
