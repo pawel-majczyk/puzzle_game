@@ -17,17 +17,13 @@ class GameApp {
 
     //get the image and create puzzles!
     init(boardWidth = this.boardWidth, collectionId = this.collectionId) {
-        let self = this;
-        this.puzzleImage = (function getPicture(boardWidth, collectionId) {
+        this.puzzleImage = ((boardWidth, collectionId) => {
             console.log('collectionId :', collectionId); //eslint-disable-line
             fetch(`https://source.unsplash.com/random/${boardWidth}x${boardWidth}`)
                 .then(imgData => imgData.url)
                 .then(url =>
-                    self.createPuzzles(url));
+                    this.createPuzzles(url));
         })(boardWidth, collectionId);
-
-
-
     }
 
 
@@ -97,7 +93,6 @@ class Puzzle {
         puzzleDiv.addEventListener('mousemove', this.whileDragging);
         puzzleDiv.addEventListener('mouseup', this.stopDragging);
         puzzleDiv.addEventListener('mouseleave', this.stopDragging);
-
         this.puzzleDiv = puzzleDiv;
     }
 
@@ -163,18 +158,14 @@ class Puzzle {
         references.left = game.gameContainer.offsetLeft + game.puzzles[targetId].posX;
         return references;
     }
-
-
 }
 
 //initial setup
-let size = 512; //experimental
+let size = 512; //experimental - feel free to fiddle with
 let collection = ['1223439', '582659', '289662']; //[aerials, faces, outdoors] (not implemented yet)
-
 function getRand(collection) {
     return collection[(Math.floor(Math.random() * collection.length))];
 }
-
 
 // execution
 let game;
@@ -185,7 +176,7 @@ let game;
             resolve(answer);
         } else {
             alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
-            resolve(2);
+            resolve(3);
         }
     }).then(selection => {
 
