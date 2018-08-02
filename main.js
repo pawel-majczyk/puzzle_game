@@ -86,50 +86,43 @@ class Puzzle {
         puzzleDiv.style.width = `${puzzleSize}px`;
         puzzleDiv.style.height = `${puzzleSize}px`;
         //add eventhandlers
-        puzzleDiv.addEventListener('mousedown', this.startDragging);
-        puzzleDiv.addEventListener('mousemove', this.whileDragging);
-        puzzleDiv.addEventListener('mouseup', this.stopDragging);
-        puzzleDiv.addEventListener('mouseleave', this.updateDragging);
+        puzzleDiv.addEventListener('mousedown', event => this.startDragging(event));
+        puzzleDiv.addEventListener('mousemove', event => this.whileDragging(event));
+        puzzleDiv.addEventListener('mouseup', event => this.stopDragging(event));
+        puzzleDiv.addEventListener('mouseleave', event => this.stopDragging(event));
         this.puzzleDiv = puzzleDiv;
     }
 
     startDragging(e) {
+
         e.preventDefault(); //disable OLE/ActiveX
-        this.classList.add('--dragged');
-        Puzzle.checkForLock(e);
+        this.puzzleDiv.classList.add('--dragged');
+        // this.checkForLock(e);
         this.isDraggable = !this.isLocked;
         return false;
-    }
-    updateDragging(e) {
-        if (this.isDraggable == true) {
-            this.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
-            this.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
-            e.preventDefault();
-            return false;
-        }
     }
 
     whileDragging(e) {
         if (this.isDraggable) {
-            this.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
-            this.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
-            let fits = Puzzle.checkForLock(e);
+            this.puzzleDiv.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
+            this.puzzleDiv.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
+            let fits = this.checkForLock(e);
             if (fits) {
-                this.classList.add('--it-fits');
+                this.puzzleDiv.classList.add('--it-fits');
             } else {
-                this.classList.remove('--it-fits');
+                this.puzzleDiv.classList.remove('--it-fits');
             }
         }
     }
 
     stopDragging(e) {
-        this.removeEventListener('mousemove', this.whileDragging);
-        this.classList.remove('--dragged', '--it-fits');
+        this.puzzleDiv.removeEventListener('mousemove', this.whileDragging);
+        this.puzzleDiv.classList.remove('--dragged', '--it-fits');
         this.isDraggable = false;
-        if (Puzzle.checkForLock(e)) {
-            this.classList.add('--fitted');
-            this.style.top = Puzzle.getReferencePoints(this.id).top + 'px';
-            this.style.left = Puzzle.getReferencePoints(this.id).left + 'px';
+        if (this.checkForLock(e)) {
+            this.puzzleDiv.classList.add('--fitted');
+            this.puzzleDiv.style.top = this.getReferencePoints(e.target.id).top + 'px';
+            this.puzzleDiv.style.left = this.getReferencePoints(e.target.id).left + 'px';
             if (!this.isLocked) {
                 game.score += 1;
                 game.checkScore();
@@ -138,8 +131,8 @@ class Puzzle {
         }
     }
 
-    static checkForLock(e) {
-        const refPoints = Puzzle.getReferencePoints(e.target.id);
+    checkForLock(e) {
+        const refPoints = this.getReferencePoints(e.target.id);
         // snap puzzle to its origin
         const snapRange = 18;
         const elementIsWithinDropZone =
@@ -150,7 +143,7 @@ class Puzzle {
         return elementIsWithinDropZone;
     }
 
-    static getReferencePoints(puzzleId) {
+    getReferencePoints(puzzleId) {
         const puzzle = game.puzzles[puzzleId];
         const { positionY, positionX } = puzzle;
         const { offsetTop, offsetLeft } = game.gameContainer;
@@ -171,18 +164,21 @@ function getRand(collection) {
 
 // execution
 let game;
-(function () {
-    return new Promise((resolve) => {
-        let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
-        if (answer > 1 && answer < 8) {
-            resolve(answer);
-        } else {
-            alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
-            resolve(3);
-        }
-    }).then(selection => {
+// (function () {
+//     return new Promise((resolve) => {
+//         let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
+//         if (answer > 1 && answer < 8) {
+//             resolve(answer);
+//         } else {
+//             alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
+//             resolve(3);
+//         }
+//     }).then(selection => {
 
-        game = new GameApp(selection, size, getRand(collection));
-        game.init();
-    });
-})();
+//         game = new GameApp(selection, size, getRand(collection));
+//         game.init();
+//     });
+// })();
+
+game = new GameApp(2, size, getRand(collection));
+game.init();
