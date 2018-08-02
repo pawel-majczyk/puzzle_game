@@ -1,7 +1,7 @@
 'use strict';
 class GameApp {
     constructor(numOfPuzzles, boardWidth = 512, collectionId) {
-        this.collectionId = collectionId;
+        this.collectionId = collectionId; // not used yet
         this.score = 0;
         this.numOfPuzzles = numOfPuzzles; // square root of total number of puzzles
         this.maxScore = Math.pow(numOfPuzzles, 2);
@@ -17,40 +17,33 @@ class GameApp {
 
     //get the image and create puzzles!
     init(boardWidth = this.boardWidth, collectionId = this.collectionId) {
-        let self = this;
-        this.puzzleImage = (function getPicture(boardWidth, collectionId) {
+        this.puzzleImage = ((boardWidth, collectionId) => {
             console.log('collectionId :', collectionId); //eslint-disable-line
             fetch(`https://source.unsplash.com/random/${boardWidth}x${boardWidth}`)
                 .then(imgData => imgData.url)
                 .then(url =>
-                    self.createPuzzles(url));
+                    this.createPuzzles(url));
         })(boardWidth, collectionId);
-
-
-
     }
-
 
     createPuzzles(puzzleImage) {
         //generate puzzles
         for (let i = 0; i < this.maxScore; i++) {
             let puzzleSize = (this.boardWidth / this.numOfPuzzles);
             this.puzzleSize = puzzleSize;
-            let posX, posY, currentPosX, currentPosY;
+            let positionX, positionY, currentPositionX, currentPositionY;
             let id = i;
-            currentPosX = Math.random() * this.boardWidth; //randomize starting position
-            currentPosY = Math.random() * this.boardWidth;
+            currentPositionX = Math.random() * this.boardWidth; //randomize starting position
+            currentPositionY = Math.random() * this.boardWidth;
 
             /** Calculate origns of each puzzle
              * values below are later used to determine background offset
-             * @param {number} posX - puzzle origin position on horizontal axis
-             * @param {number} posY - puzzle origin position on vertical axis
+             * @param {number} positionX - puzzle origin position on horizontal axis
+             * @param {number} positionY - puzzle origin position on vertical axis
              */
-            posX = (i % Math.sqrt(this.maxScore)) * puzzleSize;
-            posY = (Math.floor(i / Math.sqrt(this.maxScore))) * puzzleSize;
-            // console.log(`id: ${id} | posX/Y:${posX}/${posY}`); 
-
-            let puzzle = new Puzzle(id, posX, posY, currentPosX, currentPosY, puzzleSize, puzzleImage);
+            positionX = (i % Math.sqrt(this.maxScore)) * puzzleSize;
+            positionY = (Math.floor(i / Math.sqrt(this.maxScore))) * puzzleSize;
+            let puzzle = new Puzzle(id, positionX, positionY, currentPositionX, currentPositionY, puzzleSize, puzzleImage);
             this.puzzles.push(puzzle);
         }
         this.puzzles.forEach(puzzle => {
@@ -72,32 +65,31 @@ class GameApp {
 }
 
 class Puzzle {
-    constructor(id, posX, posY, currentPosX, currentPosY, puzzleSize, puzzleImage) {
+    constructor(id, positionX, positionY, currentpositionX, currentpositionY, puzzleSize, puzzleImage) {
         const initialOffset = 125;
-        this.posX = posX;
-        this.posY = posY;
+        this.positionX = positionX;
+        this.positionY = positionY;
         this.puzzleSize = puzzleSize;
         this.puzzleImage = puzzleImage;
-        this.currentPosX = currentPosX;
-        this.currentPosY = currentPosY + initialOffset;
-        this.locked = false;
+        this.currentpositionX = currentpositionX;
+        this.currentpositionY = currentpositionY + initialOffset;
+        this.isLocked = false;
         // create puzzle element
         const puzzleDiv = document.createElement('div');
         puzzleDiv.className = 'game__puzzle';
         puzzleDiv.id = id;
-        puzzleDiv.style.left = `${this.currentPosX}px`;
-        puzzleDiv.style.top = `${this.currentPosY}px`;
+        puzzleDiv.style.left = `${this.currentpositionX}px`;
+        puzzleDiv.style.top = `${this.currentpositionY}px`;
         puzzleDiv.style.background = `url(${this.puzzleImage})`;
-        puzzleDiv.style.backgroundPositionX = `${-posX}px`;
-        puzzleDiv.style.backgroundPositionY = `${-posY}px`;
+        puzzleDiv.style.backgroundPositionX = `${-positionX}px`;
+        puzzleDiv.style.backgroundPositionY = `${-positionY}px`;
         puzzleDiv.style.width = `${puzzleSize}px`;
         puzzleDiv.style.height = `${puzzleSize}px`;
         //add eventhandlers
         puzzleDiv.addEventListener('mousedown', this.startDragging);
         puzzleDiv.addEventListener('mousemove', this.whileDragging);
         puzzleDiv.addEventListener('mouseup', this.stopDragging);
-        puzzleDiv.addEventListener('mouseleave', this.stopDragging);
-
+        puzzleDiv.addEventListener('mouseleave', this.updateDragging);
         this.puzzleDiv = puzzleDiv;
     }
 
@@ -105,13 +97,20 @@ class Puzzle {
         e.preventDefault(); //disable OLE/ActiveX
         this.classList.add('--dragged');
         Puzzle.checkForLock(e);
-        if (!this.locked) {
-            this.draggabble = true;
+        this.isDraggable = !this.isLocked;
+        return false;
+    }
+    updateDragging(e) {
+        if (this.isDraggable == true) {
+            this.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
+            this.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
+            e.preventDefault();
+            return false;
         }
     }
 
     whileDragging(e) {
-        if (this.draggabble) {
+        if (this.isDraggable) {
             this.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
             this.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
             let fits = Puzzle.checkForLock(e);
@@ -126,22 +125,21 @@ class Puzzle {
     stopDragging(e) {
         this.removeEventListener('mousemove', this.whileDragging);
         this.classList.remove('--dragged', '--it-fits');
-        this.draggabble = false;
+        this.isDraggable = false;
         if (Puzzle.checkForLock(e)) {
             this.classList.add('--fitted');
-            this.style.top = Puzzle.getRefPoints(this.id).top + 'px';
-            this.style.left = Puzzle.getRefPoints(this.id).left + 'px';
-            if (!this.locked) {
+            this.style.top = Puzzle.getReferencePoints(this.id).top + 'px';
+            this.style.left = Puzzle.getReferencePoints(this.id).left + 'px';
+            if (!this.isLocked) {
                 game.score += 1;
                 game.checkScore();
             }
-            this.locked = true;
+            this.isLocked = true;
         }
     }
 
     static checkForLock(e) {
-        let correctSpot = false;
-        const refPoints = Puzzle.getRefPoints(e.target.id);
+        const refPoints = Puzzle.getReferencePoints(e.target.id);
         // snap puzzle to its origin
         const snapRange = 18;
         const elementIsWithinDropZone =
@@ -149,32 +147,27 @@ class Puzzle {
                 refPoints.left - e.target.offsetLeft >= -snapRange) &&
             (refPoints.top - e.target.offsetTop <= snapRange &&
                 refPoints.top - e.target.offsetTop >= -snapRange);
-        if (elementIsWithinDropZone) {
-            correctSpot = true;
-        } else {
-            correctSpot = false;
-        }
-        return correctSpot;
+        return elementIsWithinDropZone;
     }
 
-    static getRefPoints(targetId) {
-        let references = {};
-        references.top = game.gameContainer.offsetTop + game.puzzles[targetId].posY;
-        references.left = game.gameContainer.offsetLeft + game.puzzles[targetId].posX;
-        return references;
+    static getReferencePoints(puzzleId) {
+        const puzzle = game.puzzles[puzzleId];
+        const { positionY, positionX } = puzzle;
+        const { offsetTop, offsetLeft } = game.gameContainer;
+        
+        const top = offsetTop + positionY;
+        const left = offsetLeft + positionX;
+
+        return {top, left};
     }
-
-
 }
 
 //initial setup
-let size = 512; //experimental
+let size = 512; //experimental - feel free to fiddle with
 let collection = ['1223439', '582659', '289662']; //[aerials, faces, outdoors] (not implemented yet)
-
 function getRand(collection) {
     return collection[(Math.floor(Math.random() * collection.length))];
 }
-
 
 // execution
 let game;
@@ -185,7 +178,7 @@ let game;
             resolve(answer);
         } else {
             alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
-            resolve(2);
+            resolve(3);
         }
     }).then(selection => {
 
