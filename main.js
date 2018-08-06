@@ -1,7 +1,7 @@
 'use strict';
 class GameApp {
-    constructor(numOfPuzzles, boardWidth = 512, collectionId) {
-        this.collectionId = collectionId; // not used yet
+    constructor(numOfPuzzles, boardWidth = 512, collection) {
+        this.collectionId = collection.id;
         this.score = 0;
         this.numOfPuzzles = numOfPuzzles; // square root of total number of puzzles
         this.maxScore = Math.pow(numOfPuzzles, 2);
@@ -14,23 +14,21 @@ class GameApp {
         this.gameContainer.setAttribute('id', 'gameboard');
         this.gameApp.appendChild(this.gameContainer);
         this.selectedPuzzle = {};
-        this.selectedPuzzle.isDraggable = null;
+        this.selectedPuzzle.isDraggable = null; 
 
         //add eventhandlers
         this.gameApp.addEventListener('mousedown', event => this.startDragging(event));
         this.gameApp.addEventListener('mousemove', event => this.whileDragging(event));
         this.gameApp.addEventListener('mouseup', event => this.stopDragging(event));
-    }
 
-    //get the image and create puzzles!
-    init(boardWidth = this.boardWidth, collectionId = this.collectionId) {
-        this.puzzleImage = ((boardWidth, collectionId) => {
-            console.log('collectionId :', collectionId); //eslint-disable-line
-            fetch(`https://source.unsplash.com/random/${boardWidth}x${boardWidth}`)
+        this.puzzleImage = ((boardWidth, collection) => {
+            console.log(collection.name); //eslint-disable-line
+
+            fetch(`https://source.unsplash.com/collection/${collection.id}/${boardWidth}x${boardWidth}`)
                 .then(imgData => imgData.url)
                 .then(url =>
                     this.createPuzzles(url));
-        })(boardWidth, collectionId);
+        })(boardWidth, collection);
     }
 
     createPuzzles(puzzleImage) {
@@ -72,11 +70,13 @@ class GameApp {
 
     // puzzle methods
     startDragging(e) {
-        e.preventDefault(); //disable OLE/ActiveX
-        this.selectedPuzzle = this.puzzles[e.target.id];
-        if (!this.selectedPuzzle.isLocked) {
-            this.selectedPuzzle.puzzleDiv.classList.add('--dragged');
-            this.selectedPuzzle.isDraggable = !this.selectedPuzzle.isLocked;
+        if (e.target.classList.contains('game__puzzle')) {
+            this.selectedPuzzle = this.puzzles[e.target.id];
+            e.preventDefault(); //disable OLE/ActiveX
+            if (!this.selectedPuzzle.isLocked) {
+                this.selectedPuzzle.puzzleDiv.classList.add('--dragged');
+                this.selectedPuzzle.isDraggable = !this.selectedPuzzle.isLocked;
+            }
         }
         return false;
     }
@@ -86,7 +86,7 @@ class GameApp {
         if (this.selectedPuzzle.isDraggable) {
             this.selectedPuzzle.puzzleDiv.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
             this.selectedPuzzle.puzzleDiv.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
-            let fits = this.checkForLock(e);
+            let fits = this.isPuzzleOnSpot(e);
             if (fits) {
                 this.selectedPuzzle.puzzleDiv.classList.add('--it-fits');
             } else {
@@ -98,7 +98,7 @@ class GameApp {
     stopDragging(e) {
         this.selectedPuzzle.puzzleDiv.classList.remove('--dragged', '--it-fits');
         this.selectedPuzzle.isDraggable = false;
-        if (this.checkForLock(e)) {
+        if (this.isPuzzleOnSpot(e)) { //check of puzzle is near desired spot
             this.selectedPuzzle.puzzleDiv.classList.add('--fitted');
             this.selectedPuzzle.puzzleDiv.style.top = this.getReferencePoints(this.selectedPuzzle).top + 'px';
             this.selectedPuzzle.puzzleDiv.style.left = this.getReferencePoints(this.selectedPuzzle).left + 'px';
@@ -111,7 +111,7 @@ class GameApp {
         this.selectedPuzzle = {}; //deselect puzzle
     }
 
-    checkForLock(e) {
+    isPuzzleOnSpot(e) {
         const refPoints = this.getReferencePoints(this.selectedPuzzle);
         // snap puzzle to its origin
         const snapRange = 18;
@@ -170,28 +170,36 @@ class Puzzle {
 
 //initial setup
 let size = 512; //experimental - feel free to fiddle with
-let collection = ['1223439', '582659', '289662']; //[aerials, faces, outdoors] (not implemented yet)
+
+let collection = [{
+    name: 'Z nieba',
+    id: 1223439
+}, {
+    name: 'Ludzie',
+    id: 582659
+}, {
+    name: 'Terenowe',
+    id: 289662
+}];
+
 function getRand(collection) {
     return collection[(Math.floor(Math.random() * collection.length))];
 }
 
-// execution
 let game;
-// (function () {
-//     return new Promise((resolve) => {
-//         let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
-//         if (answer > 1 && answer < 8) {
-//             resolve(answer);
-//         } else {
-//             alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
-//             resolve(3);
-//         }
-//     }).then(selection => {
+(function () {
+    return new Promise((resolve) => {
+        let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
+        if (answer > 1 && answer < 8) {
+            resolve(answer);
+        } else {
+            alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
+            resolve(3);
+        }
+    }).then(selection => {
 
-//         game = new GameApp(selection, size, getRand(collection));
-//         game.init();
-//     });
-// })();
+        game = new GameApp(selection, size, getRand(collection));
+    });
+})();
 
-game = new GameApp(2, size, getRand(collection));
-game.init();
+// game = new GameApp(2, size, getRand(collection)); //for debugging
