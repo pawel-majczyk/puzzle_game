@@ -13,6 +13,13 @@ class GameApp {
         this.gameContainer = document.createElement('div');
         this.gameContainer.setAttribute('id', 'gameboard');
         this.gameApp.appendChild(this.gameContainer);
+        this.selectedPuzzle = {};
+        this.selectedPuzzle.isDraggable = null;
+
+        //add eventhandlers
+        this.gameApp.addEventListener('mousedown', event => this.startDragging(event));
+        this.gameApp.addEventListener('mousemove', event => this.whileDragging(event));
+        this.gameApp.addEventListener('mouseup', event => this.stopDragging(event));
     }
 
     //get the image and create puzzles!
@@ -62,6 +69,78 @@ class GameApp {
             }, 250);
         }
     }
+
+    // puzzle methods
+    startDragging(e) {
+        e.preventDefault(); //disable OLE/ActiveX
+        this.selectedPuzzle = this.puzzles[e.target.id];
+        if (!this.selectedPuzzle.isLocked) {
+            this.selectedPuzzle.puzzleDiv.classList.add('--dragged');
+            this.selectedPuzzle.isDraggable = !this.selectedPuzzle.isLocked;
+        }
+        return false;
+    }
+
+    whileDragging(e) {
+        // this.selectedPuzzle = this.puzzles[e.target.id];
+        if (this.selectedPuzzle.isDraggable) {
+            this.selectedPuzzle.puzzleDiv.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
+            this.selectedPuzzle.puzzleDiv.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
+            let fits = this.checkForLock(e);
+            if (fits) {
+                this.selectedPuzzle.puzzleDiv.classList.add('--it-fits');
+            } else {
+                this.selectedPuzzle.puzzleDiv.classList.remove('--it-fits');
+            }
+        }
+    }
+
+    stopDragging(e) {
+        this.selectedPuzzle.puzzleDiv.classList.remove('--dragged', '--it-fits');
+        this.selectedPuzzle.isDraggable = false;
+        if (this.checkForLock(e)) {
+            this.selectedPuzzle.puzzleDiv.classList.add('--fitted');
+            this.selectedPuzzle.puzzleDiv.style.top = this.getReferencePoints(this.selectedPuzzle).top + 'px';
+            this.selectedPuzzle.puzzleDiv.style.left = this.getReferencePoints(this.selectedPuzzle).left + 'px';
+            if (!this.selectedPuzzle.isLocked) {
+                game.score += 1;
+                game.checkScore();
+            }
+            this.selectedPuzzle.isLocked = true;
+        }
+        this.selectedPuzzle = {}; //deselect puzzle
+    }
+
+    checkForLock(e) {
+        const refPoints = this.getReferencePoints(this.selectedPuzzle);
+        // snap puzzle to its origin
+        const snapRange = 18;
+        const elementIsWithinDropZone =
+            (refPoints.left - e.target.offsetLeft <= snapRange &&
+                refPoints.left - e.target.offsetLeft >= -snapRange) &&
+            (refPoints.top - e.target.offsetTop <= snapRange &&
+                refPoints.top - e.target.offsetTop >= -snapRange);
+        return elementIsWithinDropZone;
+    }
+
+    getReferencePoints(selectedPuzzle) {
+        const {
+            positionY,
+            positionX
+        } = selectedPuzzle;
+        const {
+            offsetTop,
+            offsetLeft
+        } = game.gameContainer;
+
+        const top = offsetTop + positionY;
+        const left = offsetLeft + positionX;
+
+        return {
+            top,
+            left
+        };
+    }
 }
 
 class Puzzle {
@@ -85,73 +164,7 @@ class Puzzle {
         puzzleDiv.style.backgroundPositionY = `${-positionY}px`;
         puzzleDiv.style.width = `${puzzleSize}px`;
         puzzleDiv.style.height = `${puzzleSize}px`;
-        //add eventhandlers
-        puzzleDiv.addEventListener('mousedown', event => this.startDragging(event));
-        puzzleDiv.addEventListener('mousemove', event => this.whileDragging(event));
-        puzzleDiv.addEventListener('mouseup', event => this.stopDragging(event));
-        puzzleDiv.addEventListener('mouseleave', event => this.stopDragging(event));
         this.puzzleDiv = puzzleDiv;
-    }
-
-    startDragging(e) {
-
-        e.preventDefault(); //disable OLE/ActiveX
-        this.puzzleDiv.classList.add('--dragged');
-        // this.checkForLock(e);
-        this.isDraggable = !this.isLocked;
-        return false;
-    }
-
-    whileDragging(e) {
-        if (this.isDraggable) {
-            this.puzzleDiv.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
-            this.puzzleDiv.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
-            let fits = this.checkForLock(e);
-            if (fits) {
-                this.puzzleDiv.classList.add('--it-fits');
-            } else {
-                this.puzzleDiv.classList.remove('--it-fits');
-            }
-        }
-    }
-
-    stopDragging(e) {
-        this.puzzleDiv.removeEventListener('mousemove', this.whileDragging);
-        this.puzzleDiv.classList.remove('--dragged', '--it-fits');
-        this.isDraggable = false;
-        if (this.checkForLock(e)) {
-            this.puzzleDiv.classList.add('--fitted');
-            this.puzzleDiv.style.top = this.getReferencePoints(e.target.id).top + 'px';
-            this.puzzleDiv.style.left = this.getReferencePoints(e.target.id).left + 'px';
-            if (!this.isLocked) {
-                game.score += 1;
-                game.checkScore();
-            }
-            this.isLocked = true;
-        }
-    }
-
-    checkForLock(e) {
-        const refPoints = this.getReferencePoints(e.target.id);
-        // snap puzzle to its origin
-        const snapRange = 18;
-        const elementIsWithinDropZone =
-            (refPoints.left - e.target.offsetLeft <= snapRange &&
-                refPoints.left - e.target.offsetLeft >= -snapRange) &&
-            (refPoints.top - e.target.offsetTop <= snapRange &&
-                refPoints.top - e.target.offsetTop >= -snapRange);
-        return elementIsWithinDropZone;
-    }
-
-    getReferencePoints(puzzleId) {
-        const puzzle = game.puzzles[puzzleId];
-        const { positionY, positionX } = puzzle;
-        const { offsetTop, offsetLeft } = game.gameContainer;
-        
-        const top = offsetTop + positionY;
-        const left = offsetLeft + positionX;
-
-        return {top, left};
     }
 }
 
