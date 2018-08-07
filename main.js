@@ -9,12 +9,12 @@ class GameApp {
         this.puzzles = [];
         this.gameApp = document.getElementById('game_app');
         this.gameApp.style.height = `${this.boardWidth}px`;
-        this.gameApp.style.width = `${this.boardWidth}px`;
+        this.gameApp.style.width = `${this.boardWidth}px`; 
         this.gameContainer = document.createElement('div');
         this.gameContainer.setAttribute('id', 'gameboard');
         this.gameApp.appendChild(this.gameContainer);
         this.selectedPuzzle = {};
-        this.selectedPuzzle.isDraggable = null; 
+        this.selectedPuzzle.isDraggable = null;
 
         //add eventhandlers
         this.gameApp.addEventListener('mousedown', event => this.startDragging(event));
