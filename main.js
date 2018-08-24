@@ -171,7 +171,7 @@ class Puzzle {
 //initial setup
 let size = 512; //experimental - feel free to fiddle with
 
-let collection = [{
+let imageColllections = [{
   name: 'Z nieba',
   id: 1223439
 }, {
@@ -182,13 +182,13 @@ let collection = [{
   id: 289662
 }];
 
-function getRand(collection) {
-  return collection[(Math.floor(Math.random() * collection.length))];
+function getRand(arr) {
+  return arr[(Math.floor(Math.random() * arr.length))];
 }
 
 let game;
-(function () {
-  return new Promise((resolve) => {
+{
+  new Promise((resolve) => {
     let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
     if (answer > 1 && answer < 8) {
       resolve(answer);
@@ -198,8 +198,7 @@ let game;
     }
   }).then(selection => {
 
-    game = new GameApp(selection, size, getRand(collection));
+    game = new GameApp(selection, size, getRand(imageColllections));
   });
-})();
-
+}
 // game = new GameApp(2, size, getRand(collection)); //for debugging
