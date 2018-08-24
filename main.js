@@ -1,11 +1,20 @@
 'use strict';
 class GameApp {
-  constructor(numOfPuzzles, boardWidth = 512, collection) {
-    this.collectionId = collection.id;
+  constructor(options) {
+    /**
+     * @param {Object} options - contains these properties:
+     * @param {Number} size - size of the gameboard
+     * @param {Number} difficulty - amount of puzzles in axis
+     * @param {Object} theme - contains data for image request
+     * @param {String} theme.name - collection name
+     * @param {Number} theme.id - collection ID
+     */
+    const { size, difficulty, theme } = options;
+    this.theme = theme;
     this.score = 0;
-    this.numOfPuzzles = numOfPuzzles; // square root of total number of puzzles
-    this.maxScore = Math.pow(numOfPuzzles, 2);
-    this.boardWidth = boardWidth;
+    this.numOfPuzzles = difficulty; // square root of total number of puzzles
+    this.maxScore = Math.pow(difficulty, 2);
+    this.boardWidth = size;
     this.puzzles = [];
     this.gameApp = document.getElementById('game_app');
     this.gameApp.style.height = `${this.boardWidth}px`;
@@ -23,12 +32,12 @@ class GameApp {
 
     this.puzzleImage = ((boardWidth, collection) => {
       console.log(collection.name); //eslint-disable-line
-
+      //this game uses unsplash API to generate random puzzles to solve
       fetch(`https://source.unsplash.com/collection/${collection.id}/${boardWidth}x${boardWidth}`)
         .then(imgData => imgData.url)
         .then(url =>
           this.createPuzzles(url));
-    })(boardWidth, collection);
+    })(size, theme);
   }
 
   createPuzzles(puzzleImage) {
@@ -84,8 +93,8 @@ class GameApp {
   whileDragging(e) {
     // this.selectedPuzzle = this.puzzles[e.target.id];
     if (this.selectedPuzzle.isDraggable) {
-      this.selectedPuzzle.puzzleDiv.style.top = (e.clientY - game.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
-      this.selectedPuzzle.puzzleDiv.style.left = (e.clientX - game.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
+      this.selectedPuzzle.puzzleDiv.style.top = (e.clientY - this.getPuzzleSize(1 / 2) + window.pageYOffset) + 'px';
+      this.selectedPuzzle.puzzleDiv.style.left = (e.clientX - this.getPuzzleSize(1 / 2) + window.pageXOffset) + 'px';
       let fits = this.isPuzzleOnSpot(e);
       if (fits) {
         this.selectedPuzzle.puzzleDiv.classList.add('--it-fits');
@@ -103,8 +112,8 @@ class GameApp {
       this.selectedPuzzle.puzzleDiv.style.top = this.getReferencePoints(this.selectedPuzzle).top + 'px';
       this.selectedPuzzle.puzzleDiv.style.left = this.getReferencePoints(this.selectedPuzzle).left + 'px';
       if (!this.selectedPuzzle.isLocked) {
-        game.score += 1;
-        game.checkScore();
+        this.score += 1;
+        this.checkScore();
       }
       this.selectedPuzzle.isLocked = true;
     }
@@ -131,7 +140,7 @@ class GameApp {
     const {
       offsetTop,
       offsetLeft
-    } = game.gameContainer;
+    } = this.gameContainer;
 
     const top = offsetTop + positionY;
     const left = offsetLeft + positionX;
@@ -169,8 +178,6 @@ class Puzzle {
 }
 
 //initial setup
-let size = 512; //experimental - feel free to fiddle with
-
 let imageColllections = [{
   name: 'Z nieba',
   id: 1223439
@@ -182,23 +189,34 @@ let imageColllections = [{
   id: 289662
 }];
 
-function getRand(arr) {
-  return arr[(Math.floor(Math.random() * arr.length))];
-}
 
-let game;
+
+//helper
+const getRandomArrayItem = (arr) => {
+  return arr[(Math.floor(Math.random() * arr.length))];
+};
+
+
+//setup
+let options = {
+  size: 256,
+  difficulty: 3,
+  theme: getRandomArrayItem(imageColllections),
+};
+
+
 {
   new Promise((resolve) => {
-    let answer = prompt('Please enter difficulty (1-7, default: 3)', 3);
-    if (answer > 1 && answer < 8) {
-      resolve(answer);
+    let setDifficulty = prompt('Please enter difficulty (1-7, default: 3)', 3);
+    if (setDifficulty > 1 && setDifficulty < 8) {
+      resolve(setDifficulty);
     } else {
-      alert(`Don't be ridiculous, "${answer}" is not valid! Giving you defaults...`);
+      alert(`Don't be ridiculous, "${setDifficulty}" is not valid! Giving you defaults...`);
       resolve(3);
     }
-  }).then(selection => {
-
-    game = new GameApp(selection, size, getRand(imageColllections));
+  }).then(setDifficulty => {
+    options.difficulty = setDifficulty;
+    new GameApp(options);
   });
 }
 // game = new GameApp(2, size, getRand(collection)); //for debugging
