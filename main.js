@@ -144,7 +144,7 @@ class GameApp {
 
     const top = offsetTop + positionY;
     const left = offsetLeft + positionX;
-
+    
     return {
       top,
       left
@@ -177,7 +177,7 @@ class Puzzle {
   }
 }
 
-//initial setup
+//initial data
 let imageColllections = [{
   name: 'Z nieba',
   id: 1223439
@@ -189,21 +189,17 @@ let imageColllections = [{
   id: 289662
 }];
 
-
-
 //helper
 const getRandomArrayItem = (arr) => {
   return arr[(Math.floor(Math.random() * arr.length))];
 };
 
-
 //setup
 let options = {
-  size: 256,
+  size: 512,
   difficulty: 3,
   theme: getRandomArrayItem(imageColllections),
 };
-
 
 {
   new Promise((resolve) => {
