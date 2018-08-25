@@ -133,14 +133,8 @@ class GameApp {
   }
 
   getReferencePoints(selectedPuzzle) {
-    const {
-      positionY,
-      positionX
-    } = selectedPuzzle;
-    const {
-      offsetTop,
-      offsetLeft
-    } = this.gameContainer;
+    const { positionY, positionX } = selectedPuzzle;
+    const { offsetTop, offsetLeft } = this.gameContainer;
 
     const top = offsetTop + positionY;
     const left = offsetLeft + positionX;
@@ -152,7 +146,7 @@ class GameApp {
   }
 }
 
-class Puzzle {
+class Puzzle { //to-do make options object and find less reduntant way of writing
   constructor(id, positionX, positionY, currentpositionX, currentpositionY, puzzleSize, puzzleImage) {
     const initialOffset = 125;
     this.positionX = positionX;
