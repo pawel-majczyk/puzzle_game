@@ -184,12 +184,10 @@ let imageColllections = [{
 }];
 
 //helper
-const getRandomArrayItem = (arr) => {
-  return arr[(Math.floor(Math.random() * arr.length))];
-};
+const getRandomArrayItem = (arr) => arr[(Math.floor(Math.random() * arr.length))];
 
 //setup
-let options = {
+let gameOptions = {
   size: 512,
   difficulty: 3,
   theme: getRandomArrayItem(imageColllections),
@@ -205,8 +203,8 @@ let options = {
       resolve(3);
     }
   }).then(setDifficulty => {
-    options.difficulty = setDifficulty;
-    new GameApp(options);
+    gameOptions.difficulty = setDifficulty;
+    new GameApp(gameOptions);
   });
 }
 // game = new GameApp(2, size, getRand(collection)); //for debugging
